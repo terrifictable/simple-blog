@@ -1,0 +1,13 @@
+version: '3.3'
+
+services:
+  db:
+    image: mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: true
+      MYSQL_USER: user
+      MYSQL_PASSWORD: changeme123
+      MYSQL_DATABASE: data
+    ports:
+      - 3306:3306
