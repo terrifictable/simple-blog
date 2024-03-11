@@ -1,0 +1,10 @@
+username: "admin"
+password: "admin_password"
+allow_login: true
+xor_key: 0x42069420
+
+db:
+  user: "user"
+  password: "changeme123"
+  address: "127.0.0.1:3306"
+  db_name: "data"
