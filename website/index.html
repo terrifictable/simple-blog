@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+
+    <script src="/s/htmx.min.js"></script>
+
+    <style>
+        body {
+            font-family: monospace;
+        }
+        a { color: #56c8ff }
+        a:hover { color: lightblue }
+
+        table td {
+            padding: 0 0.4em
+        }
+        tr:hover td {
+            background-color: #333;
+        }
+        
+        #right_sidebar {
+            position: fixed;
+            right: calc(15px);
+            top: 10px;
+            z-index: 1;
+            height: 100%;
+        }
+    </style>
+
+    <title>Blog</title>
+</head>
+<body>
+    <h2>Posts</h2>
+    <table>
+        <tbody>
+            {{ range .Posts }}
+                <tr>
+                    <!-- <td>{{ .Date }}</td> -->
+                    <td>{{ .Date.Format "02-01-2006" }}</td>
+                    <td><a href="/p/{{ .ID }}">{{ .Title }}</a></td>
+                </tr>
+            {{ end }}
+        </tbody>
+    </table><br>
+
+    <div id="right_sidebar">
+        {{ if .IsLoggedin }}
+            <a href="/admin/posts">Panel</a><br>
+        {{ else if .AllowLogin }}
+            <a href="/login">Login</a><br>
+        {{ end }}
+    </div>
+</body>
+</html>
