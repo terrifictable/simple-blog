@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+
+    <script src="/s/htmx.min.js"></script>
+    <script type="text/javascript" src="/s/load.js">init()</script>
+    <script>
+        const valid_fn = () => {
+            return document.getElementById("username").value.trim() !== "" 
+                || document.getElementById("password").value.trim() !== "";
+        }
+    </script>
+
+    <link rel="stylesheet" href="/s/sidebar.css">
+    <style>
+        body {
+            font-family: monospace;
+        }
+        a { color: #56c8ff }
+        a:hover { color: lightblue }
+
+        table td {
+            padding: 0 0.4em
+        }
+        tr:hover td {
+            background-color: #333;
+        }
+
+        form input {
+            margin: 2px;
+        }
+        form input[type="submit"] {
+            border: none;
+            outline: none;
+            color: #56c8ff;
+            text-decoration: underline;
+            background-color: transparent;
+            padding: 0;
+            margin: 0;
+            margin-top: 5px;
+        }
+        form input[type="submit"]:hover {
+            cursor: pointer;
+            color: lightblue;
+        }
+
+        #status p {
+            padding: 0;
+            margin: 0;
+            margin-bottom: 5px;
+        }
+    </style>
+
+
+    {{ if not .AllowLogin }}
+        <title>Blog - 404 not found</title>
+    {{ else }}
+        <title>Blog - Login</title>
+    {{ end }}
+</head>
+<body>
+    {{ if not .AllowLogin }}
+        404 not found
+    {{ else }}
+        <div id="nav">
+            <a href="/">home</a>
+        </div>
+        <div id="content">
+            <form   hx-post="/login"
+                    hx-trigger="submit"
+                    hx-target="#message"
+                    hx-indicator="#loading"
+                    id="form">
+
+                    <label for="username">Username: </label>
+                    <input type="text" id="username" name="username" required><br>
+
+                    <label for="password">Password: </label>
+                    <input type="password" id="password" name="password" required><br>
+
+                    <input type="submit" onclick="load(valid_fn)" value="Login">
+            </form>
+            <div id="status">
+                <p id="message"></p>
+                <a href="/login">retry</a>
+            </div>
+            <div id="loading" class="htmx-indicator"></div>
+        </div>
+    {{ end }}
+</body>
+</html>
