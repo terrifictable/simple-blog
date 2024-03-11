@@ -1,0 +1,15 @@
+#nav {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    width: 100px;
+    height: 100%;
+}
+
+#content {
+    position: absolute;
+    left: 100px;
+    top: 15px;
+    width: calc(100% - 100px);
+    height: 100%;
+}
