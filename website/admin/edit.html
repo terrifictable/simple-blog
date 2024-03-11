@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+
+    <script src="/s/htmx.min.js"></script>
+    <script type="text/javascript" src="/s/load.js">init()</script>
+    <script>
+        const valid_fn = () => {
+            return document.getElementById("title").value.trim() !== "" 
+                || document.getElementById("content_input").value.trim() !== "";
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: monospace;
+        }
+        a { color: #56c8ff }
+        a:hover { color: lightblue }
+
+        table td {
+            padding: 0 0.4em
+        }
+        tr:hover td {
+            background-color: #333;
+        }
+
+        form input[type="submit"] {
+            border: none;
+            outline: none;
+            background-color: transparent;
+            color: #56c8ff;
+            padding: 0;
+            margin: 0;
+            text-decoration: underline;
+        }
+        form input[type="submit"]:hover {
+            color: lightblue;
+            cursor: pointer;
+        }
+    </style>
+    <link rel="stylesheet" href="/s/admin.css">
+
+    {{ if .IsAuthenticated }}
+        <title>Blog - New Post</title>
+    {{ else }}
+        404 not found
+    {{ end }}
+</head>
+<body>
+    {{ if .IsAuthenticated }}
+        <div id="main">
+            <div id="nav">
+                {{ range .Links }}
+                <span class="{{ if .Active }}active{{ end }}"><a href="{{ .HREF }}">{{ .Name }}</a></span><br>
+                {{ end }}
+            </div>
+
+            <div id="content">
+                <form   hx-post="/admin/edit/{{ .Post.ID }}" 
+                        hx-trigger="submit"
+                        hx-swap="innerHTML"
+                        hx-indicator="#loading"
+                        id="form">
+                    <p>Title </p>
+                    <input type="text" id="title" name="title" value="{{ .Post.Title }}" style="width: 400px" required><br><br>
+                    <p>Content </p>
+                    <textarea id="content_input" name="content" style="width: 400px; height: 200px" required>{{ .Post.Content }}</textarea><br><br>
+
+                    <input type="hidden" name="new" value="{{ .NewPost }}">
+                    <input type="submit" onclick="load(valid_fn)" value="{{ if .NewPost }}Create{{ else }}Update{{ end }}">
+                </form>
+                <div id="loading" class="htmx-indicator"></div>
+            </div>
+        </div>
+    {{ else }}
+        404 not found
+    {{ end }}
+</body>
+</html>

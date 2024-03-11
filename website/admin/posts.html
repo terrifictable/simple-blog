@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+
+    <script src="/s/htmx.min.js"></script>
+
+    <style>
+        body {
+            font-family: monospace;
+        }
+        a { color: #56c8ff }
+        a:hover { color: lightblue }
+
+        table td {
+            padding: 0 0.4em
+        }
+        tr:hover td {
+            background-color: #333;
+        }
+
+        button {
+            outline: none;
+            border: none;
+            text-decoration: underline;
+            background-color: transparent;
+            color: #56c8ff;
+        }
+        button:hover {
+            color: lightblue;
+            cursor: pointer;
+        }
+    </style>
+    <link rel="stylesheet" href="/s/admin.css">
+
+    {{ if .IsAuthenticated }}
+        <title>Blog - New Post</title>
+    {{ else }}
+        404 not found
+    {{ end }}
+</head>
+<body>
+    {{ if .IsAuthenticated }}
+        <!-- <h2>Admin Panel</h2> -->
+        <div id="main">
+            <div id="nav">
+                {{ range .Links }}
+                <span class="{{ if .Active }}active{{ end }}"><a href="{{ .HREF }}">{{ .Name }}</a></span><br>
+                {{ end }}
+            </div>
+
+            <div id="content">
+                <table>
+                    <thead>
+                        <tr>
+                            <td>ID</td>
+                            <td>Date</td>
+                            <td>Title</td>
+                            <td>Shortened Content</td>
+                            <td>Actions</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{ range .Posts }}
+                        <tr>
+                            <td>{{ .ID }}</td>
+                            <td>{{ .Date.Format "02-01-2006" }}</td>
+                            <td><a href="/p/{{ .ID }}">{{ printf "%.*s" 25 .Title }}</a></td>
+                            <td>{{ printf "%.*s" 25 .Content }}</td>
+                            <td>
+                                <a href="/admin/edit/{{ .ID }}">edit</a>
+                                <a  href="/admin/posts"
+                                    hx-trigger="click"
+                                    hx-post="/admin/delete/{{ .ID }}"
+                                    hx-confirm="Are you sure you want to delete this post?"
+                                    hx-swap="none">delete</a>
+                            </td>
+                        </tr>
+                        {{ end }}
+                    </tbody>
+                </table><br>
+                <a href="/admin/new">New Post</a>
+                <a href="/export">Export Posts</a>
+            </div>
+        </div>
+    {{ else }}
+        404 not found
+    {{ end }}
+</body>
+</html>
