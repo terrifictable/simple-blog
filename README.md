@@ -3,3 +3,13 @@
 A very simple blog site using only htmx, go to serve the html and mysql as a database
 
 (and a lil bit of css/js)
+
+
+## Quick start
+
+```
+$ docker-compose up
+```
+
+
+....maybe i should use environment variables instead of config.yml files lol

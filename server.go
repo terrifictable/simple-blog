@@ -48,6 +48,17 @@ func xor(str string, key int) []byte {
 
 var EncodedUsernamePassword string
 
+func ConnectDB(cfg mysql.Config) (*sql.DB, error) {
+	_db, err := sql.Open("mysql", cfg.FormatDSN())
+	if err != nil {
+		fmt.Printf("Failed to connect to database: \n\t> %v\n", err)
+		fmt.Printf("Retrying in 10secs\n")
+		time.Sleep(10 * time.Second)
+		return ConnectDB(cfg)
+	}
+	return _db, nil
+}
+
 func main() {
 	var config Config
 	var err error
@@ -62,15 +73,15 @@ func main() {
 	EncodedUsernamePassword = base64.StdEncoding.EncodeToString(xor(config.Username+config.Password, config.XorKey))
 
 	cfg := mysql.Config{
-		User:      config.DB.User,     // User:      "user",
-		Passwd:    config.DB.Password, // Passwd:    "gmLv93bhAtn8U5ss",
+		User:      config.DB.User,
+		Passwd:    config.DB.Password, // "gmLv93bhAtn8U5ss",
 		Net:       "tcp",
-		Addr:      config.DB.Address, // Addr:      "127.0.0.1:3306",
-		DBName:    config.DB.DBName,  // DBName:    "data",
+		Addr:      config.DB.Address,
+		DBName:    config.DB.DBName,
 		ParseTime: true,
 	}
 
-	db = Must(sql.Open("mysql", cfg.FormatDSN()))
+	db = Must(ConnectDB(cfg))
 	Must(db.Ping(), nil)
 	fmt.Println("DB Connected")
 
@@ -82,7 +93,7 @@ func main() {
 		os.WriteFile(config_file, out, 0644)
 	}()
 
-	http.Handle("/s/", http.StripPrefix("/s/", http.FileServer(http.Dir("./static/"))))
+	http.Handle("/s/", http.StripPrefix("/s/", http.FileServer(http.Dir(config.Prefix+"static/"))))
 
 	http.HandleFunc("/c", func(w http.ResponseWriter, r *http.Request) {
 		out, err := yaml.Marshal(config)
@@ -117,7 +128,7 @@ func main() {
 				fmt.Printf("Cookie 'token' is invalid: %v\n", err)
 			}
 		}
-		templ := template.Must(template.ParseFiles("website/index.html"))
+		templ := template.Must(template.ParseFiles(config.Prefix + "website/index.html"))
 		templ.Execute(w, IndexPageData{
 			IsLoggedin: login,
 			AllowLogin: config.AllowLogin,
@@ -141,10 +152,9 @@ func main() {
 				Name:  "token",
 				Value: base64.StdEncoding.EncodeToString(xor(config.Username+config.Password, config.XorKey)),
 			})
-			w.Header().Set("HX-Redirect", "/")
-			// w.WriteHeader(http.StatusOK)
+			w.Header().Set("HX-Redirect", "/admin/posts")
 		} else if r.Method == "GET" {
-			templ := template.Must(template.ParseFiles("website/login.html"))
+			templ := template.Must(template.ParseFiles(config.Prefix + "website/login.html"))
 			templ.Execute(w, LoginPageData{
 				AllowLogin: config.AllowLogin,
 			})
@@ -162,7 +172,7 @@ func main() {
 		if err != nil {
 			fmt.Printf("%v", err)
 		}
-		templ := template.Must(template.ParseFiles("website/post.html"))
+		templ := template.Must(template.ParseFiles(config.Prefix + "website/post.html"))
 		templ.Execute(w, PostPageData{
 			Post: GetPostByID(posts, id),
 		})
@@ -199,11 +209,11 @@ func main() {
 		}
 		trimmed := strings.TrimPrefix(r.URL.Path, "/admin/")
 		if trimmed == "" {
-			templ := template.Must(template.ParseFiles("website/admin/index.html"))
+			templ := template.Must(template.ParseFiles(config.Prefix + "website/admin/index.html"))
 			templ.Execute(w, data)
 			return
 		} else if trimmed == "posts" {
-			templ := template.Must(template.ParseFiles("website/admin/posts.html"))
+			templ := template.Must(template.ParseFiles(config.Prefix + "website/admin/posts.html"))
 			if l, ok := data.Links["posts"]; ok {
 				l.Active = true
 				data.Links["posts"] = l
@@ -296,7 +306,7 @@ func main() {
 				return
 			}
 
-			templ := template.Must(template.ParseFiles("website/admin/edit.html"))
+			templ := template.Must(template.ParseFiles(config.Prefix + "website/admin/edit.html"))
 			templ.Execute(w, EditPageData{
 				IsAuthenticated: data.IsAuthenticated,
 				Links:           data.Links,
@@ -304,7 +314,7 @@ func main() {
 				NewPost:         false,
 			})
 		} else if trimmed == "new" {
-			templ := template.Must(template.ParseFiles("website/admin/edit.html"))
+			templ := template.Must(template.ParseFiles(config.Prefix + "website/admin/edit.html"))
 			templ.Execute(w, EditPageData{
 				IsAuthenticated: data.IsAuthenticated,
 				Links:           data.Links,

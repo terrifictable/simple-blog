@@ -1,10 +1,13 @@
 username: "admin"
-password: "admin_password"
+password: "password"
 allow_login: true
 xor_key: 0x42069420
+
+# location of website/ and static/ folders
+prefix: /app/
 
 db:
   user: "user"
   password: "changeme123"
-  address: "127.0.0.1:3306"
+  address: "db:3306"
   db_name: "data"

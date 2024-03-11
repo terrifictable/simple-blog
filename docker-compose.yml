@@ -1,13 +1,47 @@
 version: '3.3'
 
+networks:
+  blog:
+
 services:
+  site:
+    build: .
+    networks:
+      - blog
+    volumes:
+      - ./config.yml:/app/config.yml
+    ports:
+      - 8000:8000
+    links:
+      - db
+    depends_on:
+      - db
+
   db:
     image: mysql
     restart: unless-stopped
+    networks:
+      - blog
+    healthcheck:
+      test: mysqladmin ping --silent
+      retries: 10
+      timeout: 15s
+      start_period: 30s
     environment:
       MYSQL_RANDOM_ROOT_PASSWORD: true
       MYSQL_USER: user
       MYSQL_PASSWORD: changeme123
       MYSQL_DATABASE: data
+    volumes:
+      - "./sql/init.sql:/docker-entrypoint-initdb.d/1.sql"
     ports:
       - 3306:3306
+
+  # adminer:
+  #   image: adminer
+  #   networks:
+  #     - blog
+  #   ports:
+  #     - 8080:8080
+  #   links:
+  #     - db

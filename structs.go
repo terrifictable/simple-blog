@@ -6,6 +6,8 @@ type Config struct {
 	XorKey     int    `yaml:"xor_key,omitempty"`
 	AllowLogin bool   `yaml:"allow_login,omitempty"`
 
+	Prefix string `yaml:"prefix,omitempty"`
+
 	DB struct {
 		User     string `yaml:"user,omitempty"`
 		Password string `yaml:"password,omitempty"`
