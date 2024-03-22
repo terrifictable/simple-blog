@@ -5,9 +5,11 @@ xor_key: 0x42069420
 
 # location of website/ and static/ folders
 prefix: /app/
+# prefix: ./
 
 db:
   user: "user"
   password: "changeme123"
   address: "db:3306"
+  # address: "localhost:3306"
   db_name: "data"

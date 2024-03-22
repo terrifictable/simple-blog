@@ -55,7 +55,7 @@
         <div id="main">
             <div id="nav">
                 {{ range .Links }}
-                <span class="{{ if .Active }}active{{ end }}"><a href="{{ .HREF }}">{{ .Name }}</a></span><br>
+                <{{ html .Before }}span class="{{ if .Active }}active{{ end }}"><a href="{{ .HREF }}">{{ .Name }}</a></span><br>
                 {{ end }}
             </div>
 

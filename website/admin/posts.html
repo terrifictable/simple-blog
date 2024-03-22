@@ -43,11 +43,10 @@
 </head>
 <body>
     {{ if .IsAuthenticated }}
-        <!-- <h2>Admin Panel</h2> -->
         <div id="main">
             <div id="nav">
                 {{ range .Links }}
-                <span class="{{ if .Active }}active{{ end }}"><a href="{{ .HREF }}">{{ .Name }}</a></span><br>
+                {{ html .Before }}<span id="link-{{ .Name }}" class="{{ if .Active }}active{{ end }}"><a href="{{ .HREF }}">{{ .Name }}</a></span><br>
                 {{ end }}
             </div>
 
