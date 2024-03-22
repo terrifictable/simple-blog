@@ -1,6 +1,36 @@
 package main
 
-import "time"
+import (
+	"time"
+)
+
+func GetUser(username string, password string, salt []byte) (User, error) {
+	hashed, err := HashPassword(password, salt)
+	if err != nil {
+		return User{}, nil
+	}
+
+	var user User
+	err = db.QueryRow("SELECT * FROM users WHERE username = ? AND password = ? AND salt = ?;", username, hashed, salt).Scan(&user)
+	if err != nil {
+		return User{}, err
+	}
+	return user, nil
+}
+
+func IsValidUser(username string, password string) (bool, User, error) {
+	var user User
+	err := db.QueryRow("SELECT * FROM users WHERE username = ?;", username).Scan(&user.ID, &user.Username, &user.Password, &user.Salt, &user.Access)
+	if err != nil {
+		return false, User{}, err
+	}
+
+	valid, err := VerifyPassword(user.Password, password, user.Salt)
+	if err != nil {
+		return false, User{}, err
+	}
+	return valid, user, nil
+}
 
 func UpdatePosts() ([]Post, error) {
 	var posts []Post

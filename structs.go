@@ -1,10 +1,7 @@
 package main
 
 type Config struct {
-	Username   string `yaml:"username,omitempty"`
-	Password   string `yaml:"password,omitempty"`
-	XorKey     int    `yaml:"xor_key,omitempty"`
-	AllowLogin bool   `yaml:"allow_login,omitempty"`
+	AllowLogin bool `yaml:"allow_login,omitempty"`
 
 	Prefix string `yaml:"prefix,omitempty"`
 
@@ -14,6 +11,14 @@ type Config struct {
 		Address  string `yaml:"address,omitempty"`
 		DBName   string `yaml:"db_name,omitempty"`
 	} `yaml:"db,omitempty"`
+}
+
+type User struct {
+	ID       int
+	Username string
+	Password string // 64 long
+	Salt     []byte // 16 long
+	Access   int
 }
 
 type IndexPageData struct {
@@ -41,6 +46,7 @@ type AdminPageData struct {
 	Posts []Post
 
 	IsAuthenticated bool
+	User            User
 	Links           map[string]Link
 }
 

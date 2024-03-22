@@ -35,12 +35,15 @@
         <div id="main">
             <div id="nav">
                 {{ range .Links }}
-                {{ html .Before }}<span class="{{ if .Active }}active{{ end }}"><a href="{{ .HREF }}">{{ .Name }}</a></span><br>
+                {{ html .Before }}<span id="link-{{ .Name }}" class="{{ if .Active }}active{{ end }}"><a href="{{ .HREF }}">{{ .Name }}</a></span><br>
                 {{ end }}
             </div>
 
             <div id="content">
                 Select an item in the navigation menu
+                
+                <br>
+                {{ .User.Username }}
             </div>
         </div>
     {{ else }}

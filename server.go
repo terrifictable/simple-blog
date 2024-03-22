@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"html/template"
 	"log"
-	"math/rand"
 	"net/http"
 	"os"
 	"strconv"
@@ -39,19 +38,6 @@ func MustEmpty(e error) {
 	}
 }
 
-func xor(str string, key int) []byte {
-	k1 := key & 0xff
-	k2 := (key >> 8) & 0xff
-	k3 := (key >> 16) & 0xff
-	k4 := (key >> 24) & 0xff
-
-	res := make([]byte, 0)
-	for _, c := range str {
-		res = append(res, byte((((int(c)^k1)^k2)^k3)^k4))
-	}
-	return res
-}
-
 var EncodedUsernamePassword string
 
 func ConnectDB(cfg mysql.Config) (*sql.DB, error) {
@@ -66,10 +52,7 @@ func ConnectDB(cfg mysql.Config) (*sql.DB, error) {
 }
 
 var defaults = struct {
-	Username   string
-	Password   string
 	AllowLogin bool
-	XorKey     string
 	Prefix     string
 	DB         struct {
 		User     string
@@ -78,10 +61,7 @@ var defaults = struct {
 		DBName   string
 	}
 }{
-	Username:   "admin",
-	Password:   "password",
 	AllowLogin: true,
-	XorKey:     "random",
 	Prefix:     "./",
 	DB: struct {
 		User     string
@@ -112,26 +92,11 @@ func parseConfig(cfg *Config) error {
 
 	var err error
 
-	MustEmpty(parse(&cfg.Username, "USERNAME", defaults.Username))
-	MustEmpty(parse(&cfg.Password, "PASSWORD", defaults.Password))
 	var allow_login string
 	MustEmpty(parse(&allow_login, "ALLOW_LOGIN", strconv.FormatBool(defaults.AllowLogin)))
 	cfg.AllowLogin, err = strconv.ParseBool(allow_login)
 	if err != nil {
 		return err
-	}
-
-	var xor string
-	MustEmpty(parse(&xor, "XOR_KEY", defaults.XorKey))
-	if xor == "random" {
-		cfg.XorKey = rand.Intn(0x7fffffff)
-	} else {
-		var int_xor int64
-		int_xor, err = strconv.ParseInt(xor, 0, 32)
-		if err != nil {
-			return err
-		}
-		cfg.XorKey = int(int_xor)
 	}
 
 	MustEmpty(parse(&cfg.Prefix, "PREFIX", defaults.Prefix))
@@ -148,9 +113,10 @@ func main() {
 	var config Config
 	var err error
 
-	MustEmpty(parseConfig(&config))
+	// xor_key := rand.Intn(0x7fffffff)
+	xor_key := 0x42069420
 
-	EncodedUsernamePassword = base64.StdEncoding.EncodeToString(xor(config.Username+config.Password, config.XorKey))
+	MustEmpty(parseConfig(&config))
 
 	cfg := mysql.Config{
 		User:      config.DB.User,
@@ -218,14 +184,15 @@ func main() {
 			username := r.PostForm.Get("username")
 			password := r.PostForm.Get("password")
 
-			if username != config.Username || password != config.Password {
-				fmt.Fprintf(w, "Invalid login")
+			valid, _, err := IsValidUser(username, password)
+			if !valid || err != nil {
+				fmt.Fprintf(w, "Invalid login, %t - %v", valid, err)
 				return
 			}
 
 			http.SetCookie(w, &http.Cookie{
 				Name:  "token",
-				Value: base64.StdEncoding.EncodeToString(xor(config.Username+config.Password, config.XorKey)),
+				Value: base64.StdEncoding.EncodeToString(xor([]byte(username), xor_key)) + " " + base64.StdEncoding.EncodeToString(xor([]byte(password), xor_key)),
 			})
 			w.Header().Set("HX-Redirect", "/admin/posts")
 		} else if r.Method == "GET" {
@@ -265,16 +232,31 @@ func main() {
 			fmt.Printf("%v", err)
 		}
 
+		var user User
 		var is_authenticated bool = false
 		cookie, err := r.Cookie("token")
 		if err == nil {
-			is_authenticated = cookie.Value == EncodedUsernamePassword
-		} else {
-			if err != http.ErrNoCookie {
-				fmt.Printf("Error while getting cookie 'token': %v\n", err)
+			split := strings.Split(cookie.Value, " ")
+			raw_username, err := base64.StdEncoding.DecodeString(split[0])
+			if err != nil {
+				is_authenticated = false
+				http.Error(w, "401 unauthorized", http.StatusUnauthorized)
+				return
+			}
+			raw_password, err := base64.StdEncoding.DecodeString(split[1])
+			if err != nil {
+				is_authenticated = false
+				http.Error(w, "401 unauthorized", http.StatusUnauthorized)
+				return
+			}
+			username := string(xor(raw_username, xor_key))
+			password := string(xor(raw_password, xor_key))
+
+			is_authenticated, user, err = IsValidUser(username, password)
+			if err != nil {
+				is_authenticated = false
 			}
 		}
-
 		if !is_authenticated {
 			http.Error(w, "401 unauthorized", http.StatusUnauthorized)
 			return
@@ -282,10 +264,13 @@ func main() {
 
 		data := AdminPageData{
 			IsAuthenticated: is_authenticated,
-			Posts:           posts,
+			User:            user,
+
+			Posts: posts,
 			Links: map[string]Link{
 				"a home":  {Active: false, HREF: "/", Name: "home"},
 				"b posts": {Active: false, HREF: "/admin/posts", Name: "posts"},
+				"c users": {Active: false, HREF: "/admin/users", Name: "users"},
 
 				"x logout": {Active: false, HREF: "/logout", Name: "logout", Before: "<br>"},
 			},
@@ -312,6 +297,8 @@ func main() {
 			templ.Funcs(funcs)
 			templ.Execute(w, data)
 			return
+		} else if strings.HasPrefix(trimmed, "users") {
+			// TODO:
 		} else if strings.HasPrefix(trimmed, "delete/") {
 			if r.Method != "POST" || !data.IsAuthenticated {
 				http.Error(w, "404 not found", http.StatusNotFound)
