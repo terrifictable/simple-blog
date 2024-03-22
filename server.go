@@ -148,19 +148,13 @@ func main() {
 	var config Config
 	var err error
 
-	// config_file := "config.yml"
-	// if len(os.Args) > 1 {
-	// 	config_file = os.Args[1]
-	// }
-
-	// Must(yaml.Unmarshal(Must(os.ReadFile(config_file)), &config), nil)
 	MustEmpty(parseConfig(&config))
 
 	EncodedUsernamePassword = base64.StdEncoding.EncodeToString(xor(config.Username+config.Password, config.XorKey))
 
 	cfg := mysql.Config{
 		User:      config.DB.User,
-		Passwd:    config.DB.Password, // "gmLv93bhAtn8U5ss",
+		Passwd:    config.DB.Password,
 		Net:       "tcp",
 		Addr:      config.DB.Address,
 		DBName:    config.DB.DBName,
@@ -173,11 +167,6 @@ func main() {
 
 	var posts []Post
 	posts = Must(UpdatePosts())
-
-	// defer func() {
-	// 	out := Must(yaml.Marshal(config))
-	// 	os.WriteFile(config_file, out, 0644)
-	// }()
 
 	http.Handle("/s/", http.StripPrefix("/s/", http.FileServer(http.Dir(config.Prefix+"static/"))))
 
