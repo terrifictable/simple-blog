@@ -34,6 +34,7 @@ type Link struct {
 	Active bool
 	HREF   string
 	Name   string
+	Before string
 }
 
 type AdminPageData struct {

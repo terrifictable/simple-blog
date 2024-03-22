@@ -178,6 +178,12 @@ func main() {
 		})
 	})
 
+	http.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
+		http.SetCookie(w, &http.Cookie{Name: "token", Value: "", Expires: time.Unix(0, 0)})
+		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+		http.Redirect(w, r, "/", http.StatusPermanentRedirect)
+	})
+
 	http.HandleFunc("/admin/", func(w http.ResponseWriter, r *http.Request) {
 		posts, err = UpdatePosts()
 		if err != nil {
@@ -203,21 +209,32 @@ func main() {
 			IsAuthenticated: is_authenticated,
 			Posts:           posts,
 			Links: map[string]Link{
-				"home":  {Active: false, HREF: "/", Name: "home"},
-				"posts": {Active: false, HREF: "/admin/posts", Name: "posts"},
+				"a home":  {Active: false, HREF: "/", Name: "home"},
+				"b posts": {Active: false, HREF: "/admin/posts", Name: "posts"},
+
+				"x logout": {Active: false, HREF: "/logout", Name: "logout", Before: "<br>"},
 			},
 		}
+
+		funcs := template.FuncMap{
+			"html": func(html string) template.HTML {
+				return template.HTML(html)
+			},
+		}
+
 		trimmed := strings.TrimPrefix(r.URL.Path, "/admin/")
 		if trimmed == "" {
 			templ := template.Must(template.ParseFiles(config.Prefix + "website/admin/index.html"))
+			templ.Funcs(funcs)
 			templ.Execute(w, data)
 			return
 		} else if trimmed == "posts" {
 			templ := template.Must(template.ParseFiles(config.Prefix + "website/admin/posts.html"))
-			if l, ok := data.Links["posts"]; ok {
+			if l, ok := data.Links["b posts"]; ok {
 				l.Active = true
-				data.Links["posts"] = l
+				data.Links["b posts"] = l
 			}
+			templ.Funcs(funcs)
 			templ.Execute(w, data)
 			return
 		} else if strings.HasPrefix(trimmed, "delete/") {
@@ -307,6 +324,7 @@ func main() {
 			}
 
 			templ := template.Must(template.ParseFiles(config.Prefix + "website/admin/edit.html"))
+			templ.Funcs(funcs)
 			templ.Execute(w, EditPageData{
 				IsAuthenticated: data.IsAuthenticated,
 				Links:           data.Links,
@@ -315,6 +333,7 @@ func main() {
 			})
 		} else if trimmed == "new" {
 			templ := template.Must(template.ParseFiles(config.Prefix + "website/admin/edit.html"))
+			templ.Funcs(funcs)
 			templ.Execute(w, EditPageData{
 				IsAuthenticated: data.IsAuthenticated,
 				Links:           data.Links,
