@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"html/template"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"strconv"
@@ -31,6 +32,11 @@ func Must[V any](v V, e error) V {
 		log.Fatal(e)
 	}
 	return v
+}
+func MustEmpty(e error) {
+	if e != nil {
+		log.Fatal(e)
+	}
 }
 
 func xor(str string, key int) []byte {
@@ -59,16 +65,96 @@ func ConnectDB(cfg mysql.Config) (*sql.DB, error) {
 	return _db, nil
 }
 
+var defaults = struct {
+	Username   string
+	Password   string
+	AllowLogin bool
+	XorKey     string
+	Prefix     string
+	DB         struct {
+		User     string
+		Password string
+		Address  string
+		DBName   string
+	}
+}{
+	Username:   "admin",
+	Password:   "password",
+	AllowLogin: true,
+	XorKey:     "random",
+	Prefix:     "./",
+	DB: struct {
+		User     string
+		Password string
+		Address  string
+		DBName   string
+	}{
+		User:     string(rune(0x0)),
+		Password: string(rune(0x0)),
+		Address:  string(rune(0x0)),
+		DBName:   string(rune(0x0)),
+	},
+}
+
+func parseConfig(cfg *Config) error {
+	parse := func(out *string, name string, def string) error {
+		var exist bool
+		*out, exist = os.LookupEnv(name)
+		if !exist {
+			fmt.Printf("Couldnt find '%s' in environment, using default '%s'\n", name, def)
+			if def == string(rune(0x0)) {
+				return fmt.Errorf("no default value for '%s'", name)
+			}
+			*out = def
+		}
+		return nil
+	}
+
+	var err error
+
+	MustEmpty(parse(&cfg.Username, "USERNAME", defaults.Username))
+	MustEmpty(parse(&cfg.Password, "PASSWORD", defaults.Password))
+	var allow_login string
+	MustEmpty(parse(&allow_login, "ALLOW_LOGIN", strconv.FormatBool(defaults.AllowLogin)))
+	cfg.AllowLogin, err = strconv.ParseBool(allow_login)
+	if err != nil {
+		return err
+	}
+
+	var xor string
+	MustEmpty(parse(&xor, "XOR_KEY", defaults.XorKey))
+	if xor == "random" {
+		cfg.XorKey = rand.Intn(0x7fffffff)
+	} else {
+		var int_xor int64
+		int_xor, err = strconv.ParseInt(xor, 0, 32)
+		if err != nil {
+			return err
+		}
+		cfg.XorKey = int(int_xor)
+	}
+
+	MustEmpty(parse(&cfg.Prefix, "PREFIX", defaults.Prefix))
+
+	MustEmpty(parse(&cfg.DB.User, "DB_USER", defaults.DB.User))
+	MustEmpty(parse(&cfg.DB.Password, "DB_PASSWORD", defaults.DB.Password))
+	MustEmpty(parse(&cfg.DB.Address, "DB_ADDR", defaults.DB.Address))
+	MustEmpty(parse(&cfg.DB.DBName, "DB_NAME", defaults.DB.DBName))
+
+	return nil
+}
+
 func main() {
 	var config Config
 	var err error
 
-	config_file := "config.yml"
-	if len(os.Args) > 1 {
-		config_file = os.Args[1]
-	}
+	// config_file := "config.yml"
+	// if len(os.Args) > 1 {
+	// 	config_file = os.Args[1]
+	// }
 
-	Must(yaml.Unmarshal(Must(os.ReadFile(config_file)), &config), nil)
+	// Must(yaml.Unmarshal(Must(os.ReadFile(config_file)), &config), nil)
+	MustEmpty(parseConfig(&config))
 
 	EncodedUsernamePassword = base64.StdEncoding.EncodeToString(xor(config.Username+config.Password, config.XorKey))
 
@@ -88,10 +174,10 @@ func main() {
 	var posts []Post
 	posts = Must(UpdatePosts())
 
-	defer func() {
-		out := Must(yaml.Marshal(config))
-		os.WriteFile(config_file, out, 0644)
-	}()
+	// defer func() {
+	// 	out := Must(yaml.Marshal(config))
+	// 	os.WriteFile(config_file, out, 0644)
+	// }()
 
 	http.Handle("/s/", http.StripPrefix("/s/", http.FileServer(http.Dir(config.Prefix+"static/"))))
 

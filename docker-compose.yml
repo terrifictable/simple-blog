@@ -8,6 +8,18 @@ services:
     build: .
     networks:
       - blog
+    # environment:
+    #   - USERNAME="username"
+    #   - PASSWORD="password"
+    #   - ALLOW_LOGIN=true
+    #   - XOR_KEY="random"
+    #   - PREFIX="/app/"
+    #   - DB_USER="user"
+    #   - DB_PASSWORD="changeme123"
+    #   - DB_ADDR="db:3306"
+    #   - DB_NAME="data"
+    env_file:
+      - config.env
     volumes:
       - ./config.yml:/app/config.yml
     ports:
