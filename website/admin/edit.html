@@ -53,14 +53,10 @@
 <body>
     {{ if .IsAuthenticated }}
         <div id="main">
-            <div id="nav">
-                {{ range .Links }}
-                {{ html .Before }}<span id="link-{{ .Name }}" class="{{ if .Active }}active{{ end }}"><a href="{{ .HREF }}">{{ .Name }}</a></span><br>
-                {{ end }}
-            </div>
+            {{ template "nav" . }}
 
             <div id="content">
-                <form   hx-post="/admin/edit/{{ .Post.ID }}" 
+                <form   hx-post="/admin/posts/edit/{{ .Post.ID }}" 
                         hx-trigger="submit"
                         hx-swap="innerHTML"
                         hx-indicator="#loading"

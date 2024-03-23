@@ -1,0 +1,9 @@
+{{ define "nav" }}
+    <div id="nav">
+        {{ range .Links }}
+        {{ html .Before }}<span id="link-{{ .Name }}" class="{{ if .Active }}active{{ end }}"><a href="{{ .HREF }}">{{ .Name }}</a></span><br>
+        {{ end }}
+        
+        <span id="bottom">> {{ .User.Username }} <</span>
+    </div>
+{{ end }}

@@ -10,10 +10,12 @@ USE `data`;
 -- DROP TABLE IF EXISTS `posts`;
 CREATE TABLE IF NOT EXISTS `posts` (
     `id` int NOT NULL AUTO_INCREMENT,
+    `author` int,
     `date` datetime NOT NULL ON UPDATE CURRENT_TIMESTAMP,
     `title` text NOT NULL,
     `content` text NOT NULL,
-    PRIMARY KEY (`id`)
+    PRIMARY KEY (`id`),
+    FOREIGN KEY (`author`) REFERENCES `users`(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf16;
 
 

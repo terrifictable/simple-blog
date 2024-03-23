@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+
+    <script src="/s/htmx.min.js"></script>
+    <script type="text/javascript" src="/s/load.js">init()</script>
+    <script>
+        const valid_fn = () => {
+            return document.getElementById("username").value.trim() !== "" 
+                || document.getElementById("password").value.trim() !== ""
+                || document.getElementById("old_password").value.trim() !== "";
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: monospace;
+        }
+        a { color: #56c8ff }
+        a:hover { color: lightblue }
+
+        table td {
+            padding: 0 0.4em
+        }
+        tr:hover td {
+            background-color: #333;
+        }
+
+        form input[type="submit"] {
+            border: none;
+            outline: none;
+            background-color: transparent;
+            color: #56c8ff;
+            padding: 0;
+            margin: 0;
+            text-decoration: underline;
+        }
+        form input[type="submit"]:hover {
+            color: lightblue;
+            cursor: pointer;
+        }
+        form input[type="checkbox"] {
+            margin: 0;
+            margin-top: 2px;
+        }
+
+        form label {
+            display: inline-block;
+            width: 100px;
+        }
+
+        form input {
+            margin-bottom: 5px;
+        }
+
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 30px;
+            height: 15px;
+            margin-bottom: 5px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .1s;
+            border-radius: 2px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 11px;
+            width: 13px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .1s;
+            border-radius: 2px;
+        }
+        input:checked + .slider {
+            background-color: #21f383;
+        }
+        input:checked:hover + .slider {
+            background-color: #1fd172;
+        }
+        input:checked + .slider:before {
+            transform: translateX(13px);
+        }
+
+        input:not(:checked):hover + .slider,
+        input:not(:checked):active + .slider,
+        input:not(:checked):focus + .slider {
+            background-color: #aaa;
+        }
+    </style>
+    <link rel="stylesheet" href="/s/admin.css">
+
+    {{ if .IsAuthenticated }}
+        <title>Blog - New Post</title>
+    {{ else }}
+        404 not found
+    {{ end }}
+</head>
+<body>
+    {{ if .IsAuthenticated }}
+        <div id="main">
+            {{ template "nav" . }}
+
+            <div id="content">
+                <form   hx-post="/admin/users/edit/{{ .ToEdit.ID }}" 
+                        hx-trigger="submit"
+                        hx-swap="none"
+                        hx-indicator="#loading"
+                        id="form"
+                        
+                        onsubmit="load(valid_fn)">
+                    <label for="username">Username </label>
+                    <input type="text" id="username" name="username" value="{{ .ToEdit.Username }}" style="width: 200px" required><br>
+                    
+                    <label for="password">New Password </label>
+                    <input type="password" id="password" name="passwd" style="width: 200px"><br>
+                    
+                    <label for="old_password">Old Password </label>
+                    <input type="password" id="old_password" name="old_password" style="width: 200px" required><br>
+ 
+                    {{ if or .User.IsAdmin .User.CanManageUsers }}
+                        <label for="mngr_posts">Manage Posts</label>
+                        <label class="switch">
+                            <input type="checkbox" name="manage posts" id="mngr_posts" {{ if .ToEdit.CanManagePosts }}checked{{end}}>
+                            <span class="slider"></span>
+                        </label><br>
+                        
+                        <label for="mngr_user">Manage Users</label>
+                        <label class="switch">
+                            <input type="checkbox" name="manage users" id="mngr_user" {{ if .ToEdit.CanManageUsers }}checked{{end}}>
+                            <span class="slider"></span>
+                        </label><br>
+                        
+                        {{ if .User.IsAdmin }}
+                            <label for="admin">Admin</label>
+                            <label class="switch">
+                                <input type="checkbox" name="admin" id="admin" {{ if .ToEdit.IsAdmin }}checked{{end}}>
+                                <span class="slider"></span>
+                            </label><br>
+                        {{ end }}
+                    {{ end }}
+
+
+                    <br>
+                    <input type="hidden" name="new" value="{{ .NewUser }}">
+                    <input type="submit" value="{{ if .NewUser }}Create{{ else }}Update{{ end }}">
+                </form>
+                <div id="loading" class="htmx-indicator"></div>
+                <div id="message" style="display:none">Status: <span id="status"></span></div>
+
+                <script>
+                    document.body.addEventListener('htmx:afterSwap', function(evt) {
+                        if (evt.detail.elt.id === 'form') {
+                            var statusMessage = evt.detail.xhr.responseText;
+                            document.getElementById('status').textContent = statusMessage;
+                            document.getElementById('message').style = ""
+                        }
+                    });
+                </script>
+            </div>
+        </div>
+    {{ else }}
+        404 not found
+    {{ end }}
+</body>
+</html>

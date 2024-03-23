@@ -36,7 +36,7 @@
     <link rel="stylesheet" href="/s/admin.css">
 
     {{ if .IsAuthenticated }}
-        <title>Blog - New Post</title>
+        <title>Admin - Posts</title>
     {{ else }}
         404 not found
     {{ end }}
@@ -44,20 +44,18 @@
 <body>
     {{ if .IsAuthenticated }}
         <div id="main">
-            <div id="nav">
-                {{ range .Links }}
-                {{ html .Before }}<span id="link-{{ .Name }}" class="{{ if .Active }}active{{ end }}"><a href="{{ .HREF }}">{{ .Name }}</a></span><br>
-                {{ end }}
-            </div>
+            {{ template "nav" . }}
 
             <div id="content">
+                {{ $user := .User }}
                 <table>
                     <thead>
                         <tr>
                             <td>ID</td>
+                            <td>Author</td>
                             <td>Date</td>
                             <td>Title</td>
-                            <td>Shortened Content</td>
+                            <td>Short Content</td>
                             <td>Actions</td>
                         </tr>
                     </thead>
@@ -65,14 +63,15 @@
                         {{ range .Posts }}
                         <tr>
                             <td>{{ .ID }}</td>
+                            <td>{{ author .Author }}</td>
                             <td>{{ .Date.Format "02-01-2006" }}</td>
                             <td><a href="/p/{{ .ID }}">{{ printf "%.*s" 25 .Title }}</a></td>
                             <td>{{ printf "%.*s" 25 .Content }}</td>
                             <td>
-                                <a href="/admin/edit/{{ .ID }}">edit</a>
+                                <a href="/admin/posts/edit/{{ .ID }}">edit</a>
                                 <a  href="/admin/posts"
                                     hx-trigger="click"
-                                    hx-post="/admin/delete/{{ .ID }}"
+                                    hx-post="/admin/posts/delete/{{ .ID }}"
                                     hx-confirm="Are you sure you want to delete this post?"
                                     hx-swap="none">delete</a>
                             </td>
@@ -80,8 +79,8 @@
                         {{ end }}
                     </tbody>
                 </table><br>
-                <a href="/admin/new">New Post</a>
-                <a href="/export">Export Posts</a>
+                <a href="/admin/posts/new">Create Post</a>
+                <a href="/export/posts">Export</a>
             </div>
         </div>
     {{ else }}
