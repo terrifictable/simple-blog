@@ -1,4 +1,4 @@
-FROM golang:1.21
+FROM golang:1.22.1
 
 USER 0
 
@@ -20,4 +20,4 @@ RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSI
     && tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
     && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
 
-CMD dockerize -wait tcp://db:3306 -timeout 15s /serve /app/config.yml
+CMD dockerize -wait tcp://db:3306 -timeout 15s /serve 8000

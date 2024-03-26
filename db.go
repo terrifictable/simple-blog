@@ -78,7 +78,7 @@ func GetUsers(user User) ([]User, error) {
 }
 
 func GetUserById(id int) User {
-	users, err := GetUsers(User{Access: UserAccess_Admin}) // hacky, idk should probably change this a lot
+	users, err := GetUsers(User{Access: UserAccess_Admin}) // hacky, idk should probably change this
 	if err != nil {
 		return EmptyUser
 	}

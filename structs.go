@@ -5,19 +5,6 @@ import (
 	"time"
 )
 
-type Config struct {
-	AllowLogin bool `yaml:"allow_login,omitempty"`
-
-	Prefix string `yaml:"prefix,omitempty"`
-
-	DB struct {
-		User     string `yaml:"user,omitempty"`
-		Password string `yaml:"password,omitempty"`
-		Address  string `yaml:"address,omitempty"`
-		DBName   string `yaml:"db_name,omitempty"`
-	} `yaml:"db,omitempty"`
-}
-
 const (
 	UserAccess_None        = 0b00000
 	UserAccess_CreatePosts = 0b00001
@@ -105,6 +92,8 @@ type Post struct {
 	Content string    `json:"content"`
 }
 
+var EmptyPost = Post{}
+
 /* ===========
  * == PAGES ==
  * =========== */
@@ -130,18 +119,27 @@ type Link struct {
 	Before string
 }
 
+type Links map[string]Link
+
+func (l *Links) Set(key string) {
+	for k, v := range *l {
+		v.Active = k == key
+		(*l)[k] = v
+	}
+}
+
 type AdminPageData struct {
 	Posts []Post
 
 	IsAuthenticated bool
 	User            User
-	Links           map[string]Link
+	Links           Links
 }
 
 type PostEditPageData struct {
 	IsAuthenticated bool
 	User            User
-	Links           map[string]Link
+	Links           Links
 
 	Post    Post
 	NewPost bool
@@ -150,7 +148,7 @@ type PostEditPageData struct {
 type UserEditPageData struct {
 	IsAuthenticated bool
 	User            User
-	Links           map[string]Link
+	Links           Links
 
 	ToEdit  User
 	NewUser bool
@@ -158,7 +156,7 @@ type UserEditPageData struct {
 
 type UsersPageData struct {
 	IsAuthenticated bool
-	Links           map[string]Link
+	Links           Links
 	User            User
 	Users           []User
 }
